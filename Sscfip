@@ -1,0 +1,73 @@
+
+-- AVATAR EQUIP SERVER
+-- ServerScriptService
+-- Cria o RemoteEvent automaticamente
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local InsertService = game:GetService("InsertService")
+
+local EVENT_NAME = "AvatarEquipEvent"
+
+local remote = ReplicatedStorage:FindFirstChild(EVENT_NAME)
+
+if not remote then
+    remote = Instance.new("RemoteEvent")
+    remote.Name = EVENT_NAME
+    remote.Parent = ReplicatedStorage
+end
+
+local cooldown = {}
+
+remote.OnServerEvent:Connect(function(player, idText)
+    if typeof(idText) ~= "string" then return end
+    if not idText:match("^%d+$") then return end
+    if #idText > 15 then return end
+
+    local id = tonumber(idText)
+    if not id or id <= 0 then return end
+
+    if cooldown[player] and os.clock() - cooldown[player] < 3 then
+        return
+    end
+
+    cooldown[player] = os.clock()
+
+    local character = player.Character
+    if not character then return end
+
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
+
+    local success, assetModel = pcall(function()
+        return InsertService:LoadAsset(id)
+    end)
+
+    if not success or not assetModel then
+        warn("Asset não carregado:", id)
+        return
+    end
+
+    local accessory = assetModel:FindFirstChildWhichIsA("Accessory", true)
+
+    if accessory then
+        local clone = accessory:Clone()
+
+        local ok, err = pcall(function()
+            humanoid:AddAccessory(clone)
+        end)
+
+        if not ok then
+            clone:Destroy()
+            warn("Erro ao equipar:", err)
+        end
+    else
+        warn("O ID não contém um acessório compatível.")
+    end
+
+    assetModel:Destroy()
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    cooldown[player] = nil
+end)
