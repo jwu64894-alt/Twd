@@ -1,36 +1,29 @@
 
--- AVATAR EQUIP SERVER
+-- AvatarPartsServer
 -- ServerScriptService
--- Cria o RemoteEvent automaticamente
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local InsertService = game:GetService("InsertService")
 
-local EVENT_NAME = "AvatarEquipEvent"
+local event = ReplicatedStorage:FindFirstChild("AvatarPartsEvent")
 
-local remote = ReplicatedStorage:FindFirstChild(EVENT_NAME)
-
-if not remote then
-    remote = Instance.new("RemoteEvent")
-    remote.Name = EVENT_NAME
-    remote.Parent = ReplicatedStorage
+if not event then
+    event = Instance.new("RemoteEvent")
+    event.Name = "AvatarPartsEvent"
+    event.Parent = ReplicatedStorage
 end
 
 local cooldown = {}
 
-remote.OnServerEvent:Connect(function(player, idText)
-    if typeof(idText) ~= "string" then return end
-    if not idText:match("^%d+$") then return end
-    if #idText > 15 then return end
-
-    local id = tonumber(idText)
-    if not id or id <= 0 then return end
+event.OnServerEvent:Connect(function(player, id)
+    if typeof(id) ~= "string" then return end
+    if not id:match("^%d+$") then return end
+    if #id > 15 then return end
 
     if cooldown[player] and os.clock() - cooldown[player] < 3 then
         return
     end
-
     cooldown[player] = os.clock()
 
     local character = player.Character
@@ -39,16 +32,16 @@ remote.OnServerEvent:Connect(function(player, idText)
     local humanoid = character:FindFirstChildOfClass("Humanoid")
     if not humanoid then return end
 
-    local success, assetModel = pcall(function()
-        return InsertService:LoadAsset(id)
+    local success, asset = pcall(function()
+        return InsertService:LoadAsset(tonumber(id))
     end)
 
-    if not success or not assetModel then
-        warn("Asset não carregado:", id)
+    if not success or not asset then
+        warn("Não foi possível carregar o asset.")
         return
     end
 
-    local accessory = assetModel:FindFirstChildWhichIsA("Accessory", true)
+    local accessory = asset:FindFirstChildWhichIsA("Accessory", true)
 
     if accessory then
         local clone = accessory:Clone()
@@ -59,15 +52,88 @@ remote.OnServerEvent:Connect(function(player, idText)
 
         if not ok then
             clone:Destroy()
-            warn("Erro ao equipar:", err)
+            warn(err)
         end
     else
-        warn("O ID não contém um acessório compatível.")
+        warn("O ID não é um acessório compatível.")
     end
 
-    assetModel:Destroy()
+    asset:Destroy()
 end)
 
 Players.PlayerRemoving:Connect(function(player)
     cooldown[player] = nil
+end)
+
+
+
+-- AvatarPartsMenu
+-- StarterPlayerScripts
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+local event = ReplicatedStorage:WaitForChild("AvatarPartsEvent")
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "AvatarPartsGui"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 260, 0, 165)
+frame.Position = UDim2.new(1, -280, 1, -190)
+frame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+frame.Parent = gui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 12)
+corner.Parent = frame
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0, 35)
+title.BackgroundTransparency = 1
+title.Text = "PARTES / ACESSÓRIOS"
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 15
+title.Parent = frame
+
+local input = Instance.new("TextBox")
+input.Size = UDim2.new(1, -20, 0, 40)
+input.Position = UDim2.new(0, 10, 0, 45)
+input.BackgroundColor3 = Color3.fromRGB(55, 55, 60)
+input.TextColor3 = Color3.new(1, 1, 1)
+input.PlaceholderText = "ID do acessório"
+input.Text = ""
+input.ClearTextOnFocus = false
+input.Font = Enum.Font.Gotham
+input.TextSize = 16
+input.Parent = frame
+
+local inputCorner = Instance.new("UICorner")
+inputCorner.CornerRadius = UDim.new(0, 8)
+inputCorner.Parent = input
+
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(1, -20, 0, 40)
+button.Position = UDim2.new(0, 10, 0, 95)
+button.BackgroundColor3 = Color3.fromRGB(255, 140, 45)
+button.Text = "APLICAR"
+button.TextColor3 = Color3.new(1, 1, 1)
+button.Font = Enum.Font.GothamBold
+button.TextSize = 16
+button.Parent = frame
+
+local buttonCorner = Instance.new("UICorner")
+buttonCorner.CornerRadius = UDim.new(0, 8)
+buttonCorner.Parent = button
+
+button.Activated:Connect(function()
+    local id = input.Text:match("^%s*(.-)%s*$")
+
+    if id and id:match("^%d+$") then
+        event:FireServer(id)
+    end
 end)
