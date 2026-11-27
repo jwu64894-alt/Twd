@@ -1,0 +1,2156 @@
+local Players = game:GetService("Players")
+local AvatarEditorService = game:GetService("AvatarEditorService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+local remote = ReplicatedStorage:WaitForChild("CatalogRemote")
+
+local BG = Color3.fromRGB(31, 22, 38)
+local PANEL = Color3.fromRGB(43, 31, 52)
+local CARD = Color3.fromRGB(58, 43, 68)
+local CARD_HOVER = Color3.fromRGB(72, 54, 84)
+local PURPLE = Color3.fromRGB(157, 118, 178)
+local PURPLE_LIGHT = Color3.fromRGB(190, 157, 205)
+local WHITE = Color3.fromRGB(245, 242, 247)
+local GRAY = Color3.fromRGB(180, 171, 185)
+local GREEN = Color3.fromRGB(75, 170, 100)
+local RED = Color3.fromRGB(150, 45, 55)
+
+local gui = Instance.new("ScreenGui")
+gui.Name = "CatalogoNovo"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local openButton = Instance.new("TextButton")
+openButton.Name = "AbrirCatalogo"
+openButton.Size = UDim2.fromOffset(125, 42)
+openButton.Position = UDim2.new(0, 20, 0.5, -21)
+openButton.BackgroundColor3 = PANEL
+openButton.Text = "CATÁLOGO"
+openButton.TextColor3 = WHITE
+openButton.TextSize = 15
+openButton.Font = Enum.Font.GothamBold
+openButton.AutoButtonColor = false
+openButton.Parent = gui
+
+local openCorner = Instance.new("UICorner")
+openCorner.CornerRadius = UDim.new(0, 10)
+openCorner.Parent = openButton
+
+local openStroke = Instance.new("UIStroke")
+openStroke.Color = PURPLE
+openStroke.Thickness = 1.5
+openStroke.Transparency = 0.25
+openStroke.Parent = openButton
+
+local panel = Instance.new("Frame")
+panel.Name = "Catalogo"
+panel.Size = UDim2.new(0.90, 0, 0.82, 0)
+panel.Position = UDim2.new(0.5, 0, 0.5, 0)
+panel.AnchorPoint = Vector2.new(0.5, 0.5)
+panel.BackgroundColor3 = BG
+panel.Visible = false
+panel.Parent = gui
+
+local panelCorner = Instance.new("UICorner")
+panelCorner.CornerRadius = UDim.new(0, 16)
+panelCorner.Parent = panel
+
+local panelStroke = Instance.new("UIStroke")
+panelStroke.Color = PURPLE
+panelStroke.Transparency = 0.35
+panelStroke.Thickness = 1.5
+panelStroke.Parent = panel
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -70, 0, 45)
+title.Position = UDim2.fromOffset(20, 8)
+title.BackgroundTransparency = 1
+title.Text = "Catálogo"
+title.TextColor3 = WHITE
+title.TextSize = 22
+title.Font = Enum.Font.GothamBold
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = panel
+
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.fromOffset(36, 36)
+closeButton.Position = UDim2.new(1, -48, 0, 12)
+closeButton.BackgroundColor3 = CARD
+closeButton.Text = "×"
+closeButton.TextColor3 = WHITE
+closeButton.TextSize = 25
+closeButton.Font = Enum.Font.GothamBold
+closeButton.AutoButtonColor = false
+closeButton.Parent = panel
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0, 9)
+closeCorner.Parent = closeButton
+
+local content = Instance.new("Frame")
+content.Name = "Conteudo"
+content.Size = UDim2.new(1, -32, 1, -78)
+content.Position = UDim2.fromOffset(16, 62)
+content.BackgroundTransparency = 1
+content.Parent = panel
+
+local searchBox = Instance.new("TextBox")
+searchBox.Name = "Pesquisa"
+searchBox.Size = UDim2.new(1, 0, 0, 28)
+searchBox.Position = UDim2.fromOffset(0, 0)
+searchBox.BackgroundColor3 = PANEL
+searchBox.PlaceholderText = "Pesquisar no catálogo..."
+searchBox.PlaceholderColor3 = GRAY
+searchBox.Text = ""
+searchBox.TextColor3 = WHITE
+searchBox.TextSize = 11
+searchBox.Font = Enum.Font.Gotham
+searchBox.ClearTextOnFocus = false
+searchBox.Parent = content
+
+local searchCorner = Instance.new("UICorner")
+searchCorner.CornerRadius = UDim.new(0, 7)
+searchCorner.Parent = searchBox
+
+local searchPadding = Instance.new("UIPadding")
+searchPadding.PaddingLeft = UDim.new(0, 10)
+searchPadding.Parent = searchBox
+
+local filterScroll = Instance.new("ScrollingFrame")
+filterScroll.Name = "Filtros"
+filterScroll.Size = UDim2.new(1, 0, 0, 28)
+filterScroll.Position = UDim2.fromOffset(0, 33)
+filterScroll.BackgroundTransparency = 1
+filterScroll.BorderSizePixel = 0
+filterScroll.ScrollBarThickness = 2
+filterScroll.ScrollBarImageColor3 = PURPLE
+filterScroll.ScrollingDirection = Enum.ScrollingDirection.X
+filterScroll.AutomaticCanvasSize = Enum.AutomaticSize.X
+filterScroll.CanvasSize = UDim2.new()
+filterScroll.Parent = content
+
+local filterButtons = {}
+
+local filterList = {
+"Todos",
+"Relevância",
+"Recente",
+"Vestindo"
+}
+
+local currentFilter = "Relevância"
+
+local function createFilter(text, x)
+    local button = Instance.new("TextButton")
+    button.Name = text
+    button.Size = UDim2.fromOffset(88, 27)
+    button.Position = UDim2.fromOffset(x, 0)
+    button.BackgroundColor3 = CARD
+    button.Text = text
+    button.TextColor3 = WHITE
+    button.TextSize = 10
+    button.Font = Enum.Font.GothamBold
+    button.AutoButtonColor = false
+    button.Parent = filterScroll
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 7)
+    corner.Parent = button
+    
+    filterButtons[text] = button
+    return button
+end
+
+for index, filter in ipairs(filterList) do
+    createFilter(filter, (index - 1) * 94)
+end
+
+local categories = Instance.new("ScrollingFrame")
+categories.Name = "Categorias"
+categories.Size = UDim2.new(1, 0, 0, 28)
+categories.Position = UDim2.fromOffset(0, 67)
+categories.BackgroundTransparency = 1
+categories.BorderSizePixel = 0
+categories.ScrollBarThickness = 2
+categories.ScrollBarImageColor3 = PURPLE
+categories.ScrollingDirection = Enum.ScrollingDirection.X
+categories.AutomaticCanvasSize = Enum.AutomaticSize.X
+categories.CanvasSize = UDim2.new()
+categories.Parent = content
+
+local categoryButtons = {}
+
+local categoryList = {
+"Roupas 2D",
+"Roupas 3D",
+"Sapatos",
+"Cabelos",
+"Cabeças",
+"Acessórios",
+"Emotes",
+"Animações",
+"Personagens"
+}
+
+local function createCategory(text, x)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.fromOffset(92, 27)
+    button.Position = UDim2.fromOffset(x, 0)
+    button.BackgroundColor3 = CARD
+    button.Text = text
+    button.TextColor3 = WHITE
+    button.TextSize = 9
+    button.Font = Enum.Font.GothamBold
+    button.AutoButtonColor = false
+    button.Parent = categories
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 7)
+    corner.Parent = button
+    
+    categoryButtons[text] = button
+    return button
+end
+
+for index, category in ipairs(categoryList) do
+    createCategory(category, (index - 1) * 98)
+end
+
+local itemScroll = Instance.new("ScrollingFrame")
+itemScroll.Name = "Itens"
+itemScroll.Size = UDim2.new(1, 0, 1, -102)
+itemScroll.Position = UDim2.fromOffset(0, 102)
+itemScroll.BackgroundTransparency = 1
+itemScroll.BorderSizePixel = 0
+itemScroll.ScrollBarThickness = 5
+itemScroll.ScrollBarImageColor3 = PURPLE
+itemScroll.CanvasSize = UDim2.new()
+itemScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+itemScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+itemScroll.Parent = content
+
+local grid = Instance.new("UIGridLayout")
+grid.CellSize = UDim2.fromOffset(118, 178)
+grid.CellPadding = UDim2.fromOffset(9, 10)
+grid.SortOrder = Enum.SortOrder.LayoutOrder
+grid.HorizontalAlignment = Enum.HorizontalAlignment.Left
+grid.VerticalAlignment = Enum.VerticalAlignment.Top
+grid.Parent = itemScroll
+
+local currentCategory = "Roupas 2D"
+local allItems = {}
+local activeItems = {}
+local catalogRequestVersion = 0
+local usingLoadVersion = 0
+
+local CATALOG_PAGE_SIZE = 30
+local ALL_PAGE_SIZE = 30
+
+local allCatalogState
+local categoryCatalogState
+local loadingMoreAll = false
+local loadingMoreCategory = false
+
+local function clearItems()
+    for _, child in ipairs(itemScroll:GetChildren()) do
+        if child:IsA("GuiObject") and child ~= grid then
+            child:Destroy()
+        end
+    end
+end
+
+local function getThumbnail(id, isBundle)
+    if isBundle then
+        return "rbxthumb://type=BundleThumbnail&id=" .. tostring(id) .. "&w=420&h=420"
+    end
+    
+    return "rbxthumb://type=Asset&id=" .. tostring(id) .. "&w=420&h=420"
+end
+
+local function formatPrice(price)
+    if price == nil then
+        return "Preço indisponível"
+    end
+    
+    local number = tonumber(price)
+    
+    if not number then
+        return "Preço indisponível"
+    end
+    
+    if number <= 0 then
+        return "Grátis"
+    end
+    
+    return tostring(number) .. " Robux"
+end
+
+local function promptPurchase(item)
+    local purchaseId
+    
+    if item.IsBundle then
+        purchaseId = tonumber(item.ThumbnailId or item.Id)
+    else
+        purchaseId = tonumber(item.Id)
+    end
+    
+    if not purchaseId or purchaseId <= 0 then
+        return
+    end
+    
+    remote:FireServer(
+    "Comprar",
+    purchaseId,
+    item.Name,
+    item.AssetType,
+    item.ShoePair,
+    item.IsBundle == true
+    )
+end
+
+local function refreshCards()
+    for _, card in ipairs(itemScroll:GetChildren()) do
+        if card:IsA("Frame") then
+            local itemId = tonumber(card:GetAttribute("ItemId"))
+            local useButton = card:FindFirstChild("UseButton")
+            local useLabel = useButton and useButton:FindFirstChild("UseLabel")
+            
+            if activeItems[itemId] then
+                card.BackgroundColor3 = GREEN
+                
+                if useLabel then
+                    useLabel.Text = "ATIVO"
+                    useLabel.TextColor3 = WHITE
+                    useLabel.Visible = true
+                end
+            else
+                card.BackgroundColor3 = CARD
+                
+                if useLabel then
+                    useLabel.Text = "USAR"
+                    useLabel.TextColor3 = PURPLE_LIGHT
+                    useLabel.Visible = true
+                end
+            end
+        end
+    end
+end
+
+local function createCard(item)
+    local card = Instance.new("Frame")
+    card.Name = "Item_" .. tostring(item.Id)
+    card:SetAttribute("ItemId", tonumber(item.Id))
+    card.BackgroundColor3 = CARD
+    card.ClipsDescendants = true
+    card.Parent = itemScroll
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 10)
+    corner.Parent = card
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = RED
+    stroke.Thickness = 1
+    stroke.Transparency = 0.2
+    stroke.Parent = card
+    
+    local image = Instance.new("ImageLabel")
+    image.Size = UDim2.new(1, -12, 0, 105)
+    image.Position = UDim2.fromOffset(6, 6)
+    image.BackgroundColor3 = Color3.fromRGB(38, 28, 44)
+    image.Image = getThumbnail(
+    item.ThumbnailId or item.Id,
+    item.ThumbnailIsBundle or item.IsBundle
+    )
+    image.ScaleType = Enum.ScaleType.Fit
+    image.Parent = card
+    
+    local imageCorner = Instance.new("UICorner")
+    imageCorner.CornerRadius = UDim.new(0, 8)
+    imageCorner.Parent = image
+    
+    local name = Instance.new("TextLabel")
+    name.Size = UDim2.new(1, -12, 0, 25)
+    name.Position = UDim2.fromOffset(6, 114)
+    name.BackgroundTransparency = 1
+    name.Text = item.Name or "Item"
+    name.TextColor3 = WHITE
+    name.TextSize = 11
+    name.Font = Enum.Font.GothamBold
+    name.TextTruncate = Enum.TextTruncate.AtEnd
+    name.TextXAlignment = Enum.TextXAlignment.Left
+    name.Parent = card
+    
+    local price = Instance.new("TextLabel")
+    price.Size = UDim2.new(1, -12, 0, 20)
+    price.Position = UDim2.fromOffset(6, 138)
+    price.BackgroundTransparency = 1
+    price.Text = formatPrice(item.Price)
+    price.TextColor3 = GRAY
+    price.TextSize = 10
+    price.Font = Enum.Font.Gotham
+    price.TextXAlignment = Enum.TextXAlignment.Left
+    price.Parent = card
+    
+    local useButton = Instance.new("TextButton")
+    useButton.Name = "UseButton"
+    useButton.Size = UDim2.fromOffset(54, 21)
+    useButton.Position = UDim2.new(0, 6, 1, -27)
+    useButton.BackgroundColor3 = Color3.fromRGB(75, 60, 88)
+    useButton.Text = ""
+    useButton.TextColor3 = PURPLE_LIGHT
+    useButton.TextSize = 10
+    useButton.Font = Enum.Font.GothamBold
+    useButton.AutoButtonColor = false
+    useButton.ZIndex = 6
+    useButton.Parent = card
+    
+    local useCorner = Instance.new("UICorner")
+    useCorner.CornerRadius = UDim.new(0, 6)
+    useCorner.Parent = useButton
+    
+    local useLabel = Instance.new("TextLabel")
+    useLabel.Name = "UseLabel"
+    useLabel.Size = UDim2.new(1, 0, 1, 0)
+    useLabel.Position = UDim2.fromOffset(0, 0)
+    useLabel.BackgroundTransparency = 1
+    useLabel.Text = "USAR"
+    useLabel.TextColor3 = PURPLE_LIGHT
+    useLabel.TextSize = 10
+    useLabel.Font = Enum.Font.GothamBold
+    useLabel.TextXAlignment = Enum.TextXAlignment.Center
+    useLabel.TextYAlignment = Enum.TextYAlignment.Center
+    useLabel.Visible = true
+    useLabel.ZIndex = 7
+    useLabel.Parent = useButton
+    
+    local buyButton = Instance.new("TextButton")
+    buyButton.Name = "ComprarButton"
+    buyButton.Size = UDim2.fromOffset(54, 21)
+    buyButton.Position = UDim2.new(1, -60, 1, -27)
+    buyButton.BackgroundColor3 = PURPLE
+    buyButton.Text = "COMPRAR"
+    buyButton.TextColor3 = WHITE
+    buyButton.TextSize = 8
+    buyButton.Font = Enum.Font.GothamBold
+    buyButton.AutoButtonColor = false
+    buyButton.ZIndex = 6
+    buyButton.Parent = card
+    
+    local buyCorner = Instance.new("UICorner")
+    buyCorner.CornerRadius = UDim.new(0, 6)
+    buyCorner.Parent = buyButton
+    
+    buyButton.MouseEnter:Connect(function()
+        buyButton.BackgroundColor3 = PURPLE_LIGHT
+    end)
+    
+    buyButton.MouseLeave:Connect(function()
+        buyButton.BackgroundColor3 = PURPLE
+    end)
+    
+    buyButton.Activated:Connect(function()
+        promptPurchase(item)
+    end)
+    
+    useButton.Activated:Connect(function()
+        local itemAssetType = item.AssetType
+        
+        if typeof(itemAssetType) == "EnumItem" then
+            itemAssetType = itemAssetType.Name
+        end
+        
+        remote:FireServer(
+        item.EquipCategory or currentCategory,
+        tonumber(item.Id),
+        item.Name,
+        itemAssetType,
+        item.ShoePair
+        )
+    end)
+    
+    card.MouseEnter:Connect(function()
+        if not activeItems[tonumber(item.Id)] then
+            card.BackgroundColor3 = CARD_HOVER
+        end
+    end)
+    
+    card.MouseLeave:Connect(function()
+        if activeItems[tonumber(item.Id)] then
+            card.BackgroundColor3 = GREEN
+        else
+            card.BackgroundColor3 = CARD
+        end
+    end)
+    
+    return card
+end
+
+local categoryTypes = {
+["Roupas 2D"] = {
+Enum.AvatarAssetType.TShirt,
+Enum.AvatarAssetType.Shirt,
+Enum.AvatarAssetType.Pants
+},
+
+["Roupas 3D"] = {
+Enum.AvatarAssetType.TShirtAccessory,
+Enum.AvatarAssetType.ShirtAccessory,
+Enum.AvatarAssetType.PantsAccessory,
+Enum.AvatarAssetType.JacketAccessory,
+Enum.AvatarAssetType.SweaterAccessory,
+Enum.AvatarAssetType.ShortsAccessory,
+Enum.AvatarAssetType.DressSkirtAccessory
+},
+
+["Sapatos"] = {
+Enum.AvatarAssetType.LeftShoeAccessory,
+Enum.AvatarAssetType.RightShoeAccessory
+},
+
+["Cabelos"] = {
+Enum.AvatarAssetType.HairAccessory
+},
+
+["Cabeças"] = {
+Enum.AvatarAssetType.Head,
+Enum.AvatarAssetType.DynamicHead,
+Enum.AvatarAssetType.Face
+},
+
+["Acessórios"] = {
+Enum.AvatarAssetType.Hat,
+Enum.AvatarAssetType.FaceAccessory,
+Enum.AvatarAssetType.NeckAccessory,
+Enum.AvatarAssetType.ShoulderAccessory,
+Enum.AvatarAssetType.FrontAccessory,
+Enum.AvatarAssetType.BackAccessory,
+Enum.AvatarAssetType.WaistAccessory,
+Enum.AvatarAssetType.EyebrowAccessory,
+Enum.AvatarAssetType.EyelashAccessory
+},
+
+["Emotes"] = {
+Enum.AvatarAssetType.EmoteAnimation
+},
+
+["Animações"] = {},
+["Personagens"] = {}
+}
+
+local function getAssetTypeFromName(assetTypeName)
+    if not assetTypeName then
+        return nil
+    end
+    
+    local name = string.gsub(
+    tostring(assetTypeName),
+    "^Enum%.AvatarAssetType%.",
+    ""
+    )
+    
+    for _, enumItem in ipairs(Enum.AvatarAssetType:GetEnumItems()) do
+        if enumItem.Name == name then
+            return enumItem
+        end
+    end
+    
+    return nil
+end
+
+local accessoryTypeMap = {
+Hat = Enum.AvatarAssetType.Hat,
+Hair = Enum.AvatarAssetType.HairAccessory,
+Face = Enum.AvatarAssetType.FaceAccessory,
+Neck = Enum.AvatarAssetType.NeckAccessory,
+Shoulder = Enum.AvatarAssetType.ShoulderAccessory,
+Front = Enum.AvatarAssetType.FrontAccessory,
+Back = Enum.AvatarAssetType.BackAccessory,
+Waist = Enum.AvatarAssetType.WaistAccessory,
+Jacket = Enum.AvatarAssetType.JacketAccessory,
+Sweater = Enum.AvatarAssetType.SweaterAccessory,
+Pants = Enum.AvatarAssetType.PantsAccessory,
+Shorts = Enum.AvatarAssetType.ShortsAccessory,
+LeftShoe = Enum.AvatarAssetType.LeftShoeAccessory,
+RightShoe = Enum.AvatarAssetType.RightShoeAccessory,
+DressSkirt = Enum.AvatarAssetType.DressSkirtAccessory,
+Eyebrow = Enum.AvatarAssetType.EyebrowAccessory,
+Eyelash = Enum.AvatarAssetType.EyelashAccessory
+}
+
+local function getAssetTypeFromAccessoryType(accessoryType)
+    if not accessoryType then
+        return nil
+    end
+    
+    local typeName = string.gsub(
+    tostring(accessoryType),
+    "^Enum%.AccessoryType%.",
+    ""
+    )
+    
+    return accessoryTypeMap[typeName]
+end
+
+local function getCategoryFromAssetType(assetType)
+    if not assetType then
+        return "Acessórios"
+    end
+    
+    if assetType == Enum.AvatarAssetType.LeftShoeAccessory
+        or assetType == Enum.AvatarAssetType.RightShoeAccessory then
+        return "Sapatos"
+    end
+    
+    for category, types in pairs(categoryTypes) do
+        for _, typeValue in ipairs(types) do
+            if typeValue == assetType then
+                return category
+            end
+        end
+    end
+    
+    return "Acessórios"
+end
+
+local function loadUsing()
+    usingLoadVersion += 1
+    local requestVersion = usingLoadVersion
+    
+    local character = player.Character
+    if not character then
+        if requestVersion == usingLoadVersion then
+            clearItems()
+            allItems = {}
+            activeItems = {}
+        end
+        return
+    end
+    
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then
+        if requestVersion == usingLoadVersion then
+            clearItems()
+            allItems = {}
+            activeItems = {}
+        end
+        return
+    end
+    
+    local success, description = pcall(function()
+        return humanoid:GetAppliedDescription()
+    end)
+    
+    if requestVersion ~= usingLoadVersion then
+        return
+    end
+    
+    if not success or not description then
+        clearItems()
+        allItems = {}
+        activeItems = {}
+        return
+    end
+    
+    local entries = {}
+    local entryById = {}
+    
+    local function addId(id, fallbackType)
+        local number = tonumber(id)
+        
+        if number and number > 0 and not entryById[number] then
+            local entry = {
+            Id = number,
+            AssetType = fallbackType
+            }
+            
+            entryById[number] = entry
+            table.insert(entries, entry)
+        end
+    end
+    
+    addId(description.Shirt, Enum.AvatarAssetType.Shirt)
+    addId(description.Pants, Enum.AvatarAssetType.Pants)
+    addId(description.GraphicTShirt, Enum.AvatarAssetType.TShirt)
+    addId(description.Head, Enum.AvatarAssetType.Head)
+    addId(description.Face, Enum.AvatarAssetType.Face)
+    
+    local accessoryTypes = {
+    {Property = "HatAccessory", Type = Enum.AvatarAssetType.Hat},
+    {Property = "HairAccessory", Type = Enum.AvatarAssetType.HairAccessory},
+    {Property = "FaceAccessory", Type = Enum.AvatarAssetType.FaceAccessory},
+    {Property = "NeckAccessory", Type = Enum.AvatarAssetType.NeckAccessory},
+    {Property = "ShouldersAccessory", Type = Enum.AvatarAssetType.ShoulderAccessory},
+    {Property = "FrontAccessory", Type = Enum.AvatarAssetType.FrontAccessory},
+    {Property = "BackAccessory", Type = Enum.AvatarAssetType.BackAccessory},
+    {Property = "WaistAccessory", Type = Enum.AvatarAssetType.WaistAccessory}
+    }
+    
+    for _, accessory in ipairs(accessoryTypes) do
+        local value = description[accessory.Property]
+        
+        if value and value ~= "" then
+            for id in string.gmatch(value, "%d+") do
+                addId(id, accessory.Type)
+            end
+        end
+    end
+    
+    local accessorySuccess, accessories = pcall(function()
+        return description:GetAccessories(true)
+    end)
+    
+    if accessorySuccess and accessories then
+        for _, accessory in ipairs(accessories) do
+            addId(
+            accessory.AssetId,
+            getAssetTypeFromAccessoryType(accessory.AccessoryType)
+            )
+        end
+    end
+    
+    if requestVersion ~= usingLoadVersion then
+        return
+    end
+    
+    clearItems()
+    allItems = {}
+    activeItems = {}
+    
+    if #entries == 0 then
+        return
+    end
+    
+    local ids = {}
+    
+    for _, entry in ipairs(entries) do
+        table.insert(ids, entry.Id)
+    end
+    
+    local detailsSuccess, details = pcall(function()
+        return AvatarEditorService:GetBatchItemDetailsAsync(
+        ids,
+        Enum.AvatarItemType.Asset
+        )
+    end)
+    
+    if requestVersion ~= usingLoadVersion then
+        return
+    end
+    
+    if not detailsSuccess or not details then
+        return
+    end
+    
+    local usedSearch = string.lower(searchBox.Text or "")
+    
+    for _, data in ipairs(details) do
+        if requestVersion ~= usingLoadVersion then
+            return
+        end
+        
+        local id = tonumber(data.Id)
+        
+        if id then
+            local itemName = data.Name or "Item equipado"
+            
+            local matchesSearch =
+            usedSearch == ""
+            or string.find(
+            string.lower(itemName),
+            usedSearch,
+            1,
+            true
+            ) ~= nil
+            
+            if matchesSearch then
+                local entry = entryById[id]
+                local assetType = getAssetTypeFromName(data.AssetType)
+                
+                if not assetType and entry then
+                    assetType = entry.AssetType
+                end
+                
+                local item = {
+                Id = id,
+                Name = itemName,
+                Price = data.Price,
+                AssetType = assetType,
+                IsBundle = false,
+                ThumbnailId = id,
+                EquipCategory = getCategoryFromAssetType(assetType)
+                }
+                
+                table.insert(allItems, item)
+                activeItems[id] = true
+                createCard(item)
+            end
+        end
+    end
+    
+    if requestVersion == usingLoadVersion then
+        refreshCards()
+    end
+end
+
+local function bundleToItem(data, seenIds)
+    if not data or not data.Id or not data.Name then
+        return nil
+    end
+    
+    local bundleType = string.gsub(
+    tostring(data.BundleType or ""),
+    "^Enum%.BundleType%.",
+    ""
+    )
+    
+    if bundleType == "Shoes" then
+        local leftShoe
+        local rightShoe
+        
+        for _, bundledItem in ipairs(data.BundledItems or {}) do
+            local bundledType = string.gsub(
+            tostring(bundledItem.AssetType or ""),
+            "^Enum%.AvatarAssetType%.",
+            ""
+            )
+            
+            if bundledType == "LeftShoeAccessory" then
+                leftShoe = tonumber(bundledItem.Id)
+            elseif bundledType == "RightShoeAccessory" then
+                rightShoe = tonumber(bundledItem.Id)
+            end
+        end
+        
+        if not leftShoe or not rightShoe then
+            return nil
+        end
+        
+        local key = "Bundle:" .. tostring(data.Id)
+        
+        if seenIds[key] then
+            return nil
+        end
+        
+        seenIds[key] = true
+        
+        return {
+        Id = tonumber(data.Id),
+        Name = data.Name,
+        Price = data.Price,
+        AssetType = "ShoePair",
+        IsBundle = true,
+        ThumbnailId = tonumber(data.Id),
+        ThumbnailIsBundle = true,
+        EquipCategory = "Sapatos",
+        ShoePair = {
+        Left = leftShoe,
+        Right = rightShoe
+        }
+        }
+    end
+    
+    if bundleType == "Animations" then
+        local key = "Bundle:" .. tostring(data.Id)
+        
+        if seenIds[key] then
+            return nil
+        end
+        
+        seenIds[key] = true
+        
+        return {
+        Id = tonumber(data.Id),
+        Name = data.Name,
+        Price = data.Price,
+        IsBundle = true,
+        ThumbnailId = tonumber(data.Id),
+        ThumbnailIsBundle = true,
+        EquipCategory = "Animações"
+        }
+    end
+    
+    if bundleType == "BodyParts" then
+        local key = "Bundle:" .. tostring(data.Id)
+        
+        if seenIds[key] then
+            return nil
+        end
+        
+        seenIds[key] = true
+        
+        return {
+        Id = tonumber(data.Id),
+        Name = data.Name,
+        Price = data.Price,
+        IsBundle = true,
+        ThumbnailId = tonumber(data.Id),
+        ThumbnailIsBundle = true,
+        EquipCategory = "Personagens"
+        }
+    end
+    
+    if bundleType == "DynamicHead"
+        or bundleType == "DynamicHeadAvatar" then
+        
+        local dynamicHeadId
+        
+        for _, bundledItem in ipairs(data.BundledItems or {}) do
+            local bundledType = string.gsub(
+            tostring(bundledItem.AssetType or ""),
+            "^Enum%.AvatarAssetType%.",
+            ""
+            )
+            
+            if bundledType == "DynamicHead" then
+                dynamicHeadId = tonumber(bundledItem.Id)
+                break
+            end
+        end
+        
+        if not dynamicHeadId or seenIds[dynamicHeadId] then
+            return nil
+        end
+        
+        seenIds[dynamicHeadId] = true
+        
+        return {
+        Id = dynamicHeadId,
+        Name = data.Name,
+        Price = data.Price,
+        AssetType = Enum.AvatarAssetType.DynamicHead,
+        IsBundle = true,
+        ThumbnailId = tonumber(data.Id),
+        ThumbnailIsBundle = true,
+        EquipCategory = "Cabeças"
+        }
+    end
+    
+    return nil
+end
+
+local function assetToAllItem(data, seenIds)
+    if not data or not data.Id or not data.Name then
+        return nil
+    end
+    
+    local id = tonumber(data.Id)
+    
+    if not id then
+        return nil
+    end
+    
+    local key = "Asset:" .. tostring(id)
+    
+    if seenIds[key] then
+        return nil
+    end
+    
+    seenIds[key] = true
+    
+    local assetType = getAssetTypeFromName(data.AssetType)
+    
+    return {
+    Id = id,
+    Name = data.Name,
+    Price = data.Price,
+    AssetType = assetType,
+    IsBundle = false,
+    ThumbnailId = id,
+    EquipCategory = getCategoryFromAssetType(assetType)
+    }
+end
+
+local function createAllAssetPages(keyword, sortType)
+    local params = CatalogSearchParams.new()
+    
+    params.SearchKeyword = keyword or ""
+    params.AssetTypes = {
+    Enum.AvatarAssetType.TShirt,
+    Enum.AvatarAssetType.Shirt,
+    Enum.AvatarAssetType.Pants,
+    Enum.AvatarAssetType.TShirtAccessory,
+    Enum.AvatarAssetType.ShirtAccessory,
+    Enum.AvatarAssetType.PantsAccessory,
+    Enum.AvatarAssetType.JacketAccessory,
+    Enum.AvatarAssetType.SweaterAccessory,
+    Enum.AvatarAssetType.ShortsAccessory,
+    Enum.AvatarAssetType.DressSkirtAccessory,
+    Enum.AvatarAssetType.HairAccessory,
+    Enum.AvatarAssetType.Head,
+    Enum.AvatarAssetType.DynamicHead,
+    Enum.AvatarAssetType.Face,
+    Enum.AvatarAssetType.Hat,
+    Enum.AvatarAssetType.FaceAccessory,
+    Enum.AvatarAssetType.NeckAccessory,
+    Enum.AvatarAssetType.ShoulderAccessory,
+    Enum.AvatarAssetType.FrontAccessory,
+    Enum.AvatarAssetType.BackAccessory,
+    Enum.AvatarAssetType.WaistAccessory,
+    Enum.AvatarAssetType.EyebrowAccessory,
+    Enum.AvatarAssetType.EyelashAccessory,
+    Enum.AvatarAssetType.EmoteAnimation
+    }
+    params.SortType = sortType
+    params.Limit = ALL_PAGE_SIZE
+    
+    return AvatarEditorService:SearchCatalogAsync(params)
+end
+
+local function createAllBundlePages(keyword, sortType)
+    local params = CatalogSearchParams.new()
+    
+    params.SearchKeyword = keyword or ""
+    params.BundleTypes = {
+    Enum.BundleType.Shoes,
+    Enum.BundleType.Animations,
+    Enum.BundleType.BodyParts,
+    Enum.BundleType.DynamicHead,
+    Enum.BundleType.DynamicHeadAvatar
+    }
+    params.SortType = sortType
+    params.Limit = ALL_PAGE_SIZE
+    params.IncludeOffSale = true
+    
+    return AvatarEditorService:SearchCatalogAsync(params)
+end
+
+local function fillAllSourceBuffer(state, sourceName, requestVersion)
+    local pages = state[sourceName .. "Pages"]
+    local buffer = state[sourceName .. "Buffer"]
+    
+    if not pages or not buffer then
+        state[sourceName .. "Finished"] = true
+        return false
+    end
+    
+    while #buffer == 0 and not state[sourceName .. "Finished"] do
+        if requestVersion ~= catalogRequestVersion then
+            return false
+        end
+        
+        local success, results = pcall(function()
+            return pages:GetCurrentPage()
+        end)
+        
+        if not success or not results then
+            state[sourceName .. "Finished"] = true
+            break
+        end
+        
+        for _, data in ipairs(results) do
+            if requestVersion ~= catalogRequestVersion then
+                return false
+            end
+            
+            local item
+            
+            if sourceName == "asset" then
+                item = assetToAllItem(data, state.seenIds)
+            else
+                item = bundleToItem(data, state.seenIds)
+            end
+            
+            if item then
+                table.insert(buffer, item)
+            end
+        end
+        
+        if pages.IsFinished then
+            state[sourceName .. "Finished"] = true
+            break
+        end
+        
+        if #buffer == 0 then
+            local successAdvance = pcall(function()
+                pages:AdvanceToNextPageAsync()
+            end)
+            
+            if not successAdvance then
+                state[sourceName .. "Finished"] = true
+                break
+            end
+        end
+    end
+    
+    return #buffer > 0
+end
+
+local function appendAllCatalogPage(requestVersion)
+    local state = allCatalogState
+    
+    if not state
+        or state.requestVersion ~= requestVersion
+        or requestVersion ~= catalogRequestVersion
+        or state.loading then
+        return false
+    end
+    
+    state.loading = true
+    
+    local added = 0
+    
+    while added < ALL_PAGE_SIZE do
+        if requestVersion ~= catalogRequestVersion then
+            state.loading = false
+            return false
+        end
+        
+        if #state.assetBuffer == 0 and not state.assetFinished then
+            fillAllSourceBuffer(state, "asset", requestVersion)
+        end
+        
+        if #state.bundleBuffer == 0 and not state.bundleFinished then
+            fillAllSourceBuffer(state, "bundle", requestVersion)
+        end
+        
+        local assetAvailable = #state.assetBuffer > 0
+        local bundleAvailable = #state.bundleBuffer > 0
+        
+        if not assetAvailable and not bundleAvailable then
+            break
+        end
+        
+        state.mixPosition += 1
+        
+        local item
+        
+        if state.mixPosition % 5 == 0 and bundleAvailable then
+            item = table.remove(state.bundleBuffer, 1)
+        elseif assetAvailable then
+            item = table.remove(state.assetBuffer, 1)
+        else
+            item = table.remove(state.bundleBuffer, 1)
+        end
+        
+        if item then
+            table.insert(allItems, item)
+            createCard(item)
+            added += 1
+        end
+    end
+    
+    state.loading = false
+    refreshCards()
+    
+    return added > 0
+end
+
+local function loadAllCatalog(keyword, sortType, requestVersion)
+    clearItems()
+    allItems = {}
+    
+    allCatalogState = {
+    requestVersion = requestVersion,
+    assetPages = nil,
+    bundlePages = nil,
+    assetFinished = false,
+    bundleFinished = false,
+    assetBuffer = {},
+    bundleBuffer = {},
+    loading = false,
+    seenIds = {},
+    mixPosition = 0
+    }
+    
+    local state = allCatalogState
+    
+    local assetSuccess, assetPages = pcall(function()
+        return createAllAssetPages(keyword, sortType)
+    end)
+    
+    if assetSuccess then
+        state.assetPages = assetPages
+    else
+        state.assetFinished = true
+    end
+    
+    if requestVersion ~= catalogRequestVersion then
+        return
+    end
+    
+    local bundleSuccess, bundlePages = pcall(function()
+        return createAllBundlePages(keyword, sortType)
+    end)
+    
+    if bundleSuccess then
+        state.bundlePages = bundlePages
+    else
+        state.bundleFinished = true
+    end
+    
+    if requestVersion ~= catalogRequestVersion then
+        return
+    end
+    
+    appendAllCatalogPage(requestVersion)
+end
+
+local function loadMoreAllCatalog()
+    if currentFilter ~= "Todos" then
+        return
+    end
+    
+    local state = allCatalogState
+    
+    if not state
+        or state.loading
+        or loadingMoreAll
+        or (
+        state.assetFinished
+        and state.bundleFinished
+        and #state.assetBuffer == 0
+        and #state.bundleBuffer == 0
+        ) then
+        return
+    end
+    
+    loadingMoreAll = true
+    
+    local requestVersion = state.requestVersion
+    
+    task.spawn(function()
+        appendAllCatalogPage(requestVersion)
+        
+        if requestVersion == catalogRequestVersion then
+            loadingMoreAll = false
+        end
+    end)
+end
+
+local function createCategoryPages(category, keyword, sortType)
+    local params = CatalogSearchParams.new()
+    
+    params.SearchKeyword = keyword or ""
+    params.SortType = sortType
+    params.Limit = CATALOG_PAGE_SIZE
+    
+    if category == "Animações" then
+        params.BundleTypes = {Enum.BundleType.Animations}
+        params.IncludeOffSale = true
+    elseif category == "Personagens" then
+        params.BundleTypes = {Enum.BundleType.BodyParts}
+        params.IncludeOffSale = true
+    else
+        params.AssetTypes = categoryTypes[category]
+    end
+    
+    return AvatarEditorService:SearchCatalogAsync(params)
+end
+
+local function categoryDataToItem(data, category, seenIds)
+    if not data or not data.Id or not data.Name then
+        return nil
+    end
+    
+    local id = tonumber(data.Id)
+    
+    if not id or seenIds[id] then
+        return nil
+    end
+    
+    seenIds[id] = true
+    
+    local isBundle =
+    category == "Animações"
+    or category == "Personagens"
+    
+    return {
+    Id = id,
+    Name = data.Name,
+    Price = data.Price,
+    AssetType = getAssetTypeFromName(data.AssetType),
+    IsBundle = isBundle,
+    ThumbnailId = id,
+    ThumbnailIsBundle = isBundle,
+    EquipCategory = category
+    }
+end
+
+local function appendCategoryPage(requestVersion)
+    local state = categoryCatalogState
+    
+    if not state
+        or state.requestVersion ~= requestVersion
+        or requestVersion ~= catalogRequestVersion
+        or state.loading then
+        return false
+    end
+    
+    state.loading = true
+    
+    local added = 0
+    
+    while added < CATALOG_PAGE_SIZE and not state.finished do
+        if requestVersion ~= catalogRequestVersion then
+            state.loading = false
+            return false
+        end
+        
+        local success, results = pcall(function()
+            return state.pages:GetCurrentPage()
+        end)
+        
+        if not success or not results then
+            state.finished = true
+            break
+        end
+        
+        for _, data in ipairs(results) do
+            if added >= CATALOG_PAGE_SIZE then
+                break
+            end
+            
+            local item = categoryDataToItem(
+            data,
+            state.category,
+            state.seenIds
+            )
+            
+            if item then
+                table.insert(allItems, item)
+                createCard(item)
+                added += 1
+            end
+        end
+        
+        if state.pages.IsFinished then
+            state.finished = true
+            break
+        end
+        
+        if added < CATALOG_PAGE_SIZE then
+            local advanceSuccess = pcall(function()
+                state.pages:AdvanceToNextPageAsync()
+            end)
+            
+            if not advanceSuccess then
+                state.finished = true
+                break
+            end
+        end
+    end
+    
+    state.loading = false
+    refreshCards()
+    
+    return added > 0
+end
+
+local function loadNormalCategory(category, keyword, sortType, requestVersion)
+    clearItems()
+    allItems = {}
+    
+    categoryCatalogState = {
+    requestVersion = requestVersion,
+    category = category,
+    pages = nil,
+    finished = false,
+    loading = false,
+    seenIds = {}
+    }
+    
+    local state = categoryCatalogState
+    
+    local success, pages = pcall(function()
+        return createCategoryPages(category, keyword, sortType)
+    end)
+    
+    if not success or not pages then
+        state.finished = true
+        return
+    end
+    
+    if requestVersion ~= catalogRequestVersion then
+        return
+    end
+    
+    state.pages = pages
+    appendCategoryPage(requestVersion)
+end
+
+local function loadMoreCategory()
+    if currentFilter == "Todos"
+        or currentFilter == "Vestindo" then
+        return
+    end
+    
+    local state = categoryCatalogState
+    
+    if not state
+        or state.loading
+        or loadingMoreCategory
+        or state.finished then
+        return
+    end
+    
+    loadingMoreCategory = true
+    
+    local requestVersion = state.requestVersion
+    
+    task.spawn(function()
+        appendCategoryPage(requestVersion)
+        
+        if requestVersion == catalogRequestVersion then
+            loadingMoreCategory = false
+        end
+    end)
+end
+
+local function createShoesPages(keyword, sortType)
+    local params = CatalogSearchParams.new()
+    
+    params.SearchKeyword = keyword or ""
+    params.BundleTypes = {Enum.BundleType.Shoes}
+    params.SortType = sortType
+    params.Limit = CATALOG_PAGE_SIZE
+    params.IncludeOffSale = true
+    
+    return AvatarEditorService:SearchCatalogAsync(params)
+end
+
+local function shoeDataToItem(data, seenIds)
+    if not data or not data.Id or not data.Name then
+        return nil
+    end
+    
+    local bundleId = tonumber(data.Id)
+    
+    if not bundleId or seenIds[bundleId] then
+        return nil
+    end
+    
+    local leftShoe
+    local rightShoe
+    
+    for _, bundledItem in ipairs(data.BundledItems or {}) do
+        local bundledType = string.gsub(
+        tostring(bundledItem.AssetType or ""),
+        "^Enum%.AvatarAssetType%.",
+        ""
+        )
+        
+        if bundledType == "LeftShoeAccessory" then
+            leftShoe = tonumber(bundledItem.Id)
+        elseif bundledType == "RightShoeAccessory" then
+            rightShoe = tonumber(bundledItem.Id)
+        end
+    end
+    
+    if not leftShoe or not rightShoe then
+        return nil
+    end
+    
+    seenIds[bundleId] = true
+    
+    return {
+    Id = bundleId,
+    Name = data.Name,
+    Price = data.Price,
+    AssetType = "ShoePair",
+    IsBundle = true,
+    ThumbnailId = bundleId,
+    ThumbnailIsBundle = true,
+    EquipCategory = "Sapatos",
+    ShoePair = {
+    Left = leftShoe,
+    Right = rightShoe
+    }
+    }
+end
+
+local function appendShoesPage(requestVersion)
+    local state = categoryCatalogState
+    
+    if not state or state.loading then
+        return false
+    end
+    
+    state.loading = true
+    
+    local added = 0
+    
+    while added < CATALOG_PAGE_SIZE and not state.finished do
+        if requestVersion ~= catalogRequestVersion then
+            state.loading = false
+            return false
+        end
+        
+        local success, results = pcall(function()
+            return state.pages:GetCurrentPage()
+        end)
+        
+        if not success or not results then
+            state.finished = true
+            break
+        end
+        
+        for _, data in ipairs(results) do
+            if added >= CATALOG_PAGE_SIZE then
+                break
+            end
+            
+            local item = shoeDataToItem(data, state.seenIds)
+            
+            if item then
+                table.insert(allItems, item)
+                createCard(item)
+                added += 1
+            end
+        end
+        
+        if state.pages.IsFinished then
+            state.finished = true
+            break
+        end
+        
+        if added < CATALOG_PAGE_SIZE then
+            local advanceSuccess = pcall(function()
+                state.pages:AdvanceToNextPageAsync()
+            end)
+            
+            if not advanceSuccess then
+                state.finished = true
+                break
+            end
+        end
+    end
+    
+    state.loading = false
+    refreshCards()
+    
+    return added > 0
+end
+
+local function loadShoes(keyword, sortType, requestVersion)
+    clearItems()
+    allItems = {}
+    
+    categoryCatalogState = {
+    requestVersion = requestVersion,
+    category = "Sapatos",
+    pages = nil,
+    finished = false,
+    loading = false,
+    seenIds = {}
+    }
+    
+    local state = categoryCatalogState
+    
+    local success, pages = pcall(function()
+        return createShoesPages(keyword, sortType)
+    end)
+    
+    if not success or not pages then
+        state.finished = true
+        return
+    end
+    
+    if requestVersion ~= catalogRequestVersion then
+        return
+    end
+    
+    state.pages = pages
+    appendShoesPage(requestVersion)
+end
+
+local function loadMoreShoes()
+    if currentCategory ~= "Sapatos"
+        or currentFilter == "Todos"
+        or currentFilter == "Vestindo" then
+        return
+    end
+    
+    local state = categoryCatalogState
+    
+    if not state
+        or state.loading
+        or loadingMoreCategory
+        or state.finished then
+        return
+    end
+    
+    loadingMoreCategory = true
+    
+    local requestVersion = state.requestVersion
+    
+    task.spawn(function()
+        appendShoesPage(requestVersion)
+        
+        if requestVersion == catalogRequestVersion then
+            loadingMoreCategory = false
+        end
+    end)
+end
+
+local function createHeadSource(keyword, sortType, sourceType)
+    local params = CatalogSearchParams.new()
+    
+    params.SearchKeyword = keyword or ""
+    params.SortType = sortType
+    params.Limit = CATALOG_PAGE_SIZE
+    
+    if sourceType.AssetType then
+        params.AssetTypes = {sourceType.AssetType}
+    else
+        params.BundleTypes = {sourceType.BundleType}
+    end
+    
+    return AvatarEditorService:SearchCatalogAsync(params)
+end
+
+local function createHeadItem(data, sourceType, seenIds)
+    if not data or not data.Id or not data.Name then
+        return nil
+    end
+    
+    if sourceType.AssetType then
+        local id = tonumber(data.Id)
+        
+        if not id or seenIds[id] then
+            return nil
+        end
+        
+        seenIds[id] = true
+        
+        return {
+        Id = id,
+        Name = data.Name,
+        Price = data.Price,
+        AssetType = getAssetTypeFromName(data.AssetType)
+        or sourceType.AssetType,
+        IsBundle = false,
+        ThumbnailId = id,
+        EquipCategory = "Cabeças"
+        }
+    end
+    
+    local dynamicHeadId
+    
+    for _, bundledItem in ipairs(data.BundledItems or {}) do
+        local bundledType = string.gsub(
+        tostring(bundledItem.AssetType or ""),
+        "^Enum%.AvatarAssetType%.",
+        ""
+        )
+        
+        if bundledType == "DynamicHead" then
+            dynamicHeadId = tonumber(bundledItem.Id)
+            break
+        end
+    end
+    
+    if not dynamicHeadId or seenIds[dynamicHeadId] then
+        return nil
+    end
+    
+    seenIds[dynamicHeadId] = true
+    
+    return {
+    Id = dynamicHeadId,
+    Name = data.Name,
+    Price = data.Price,
+    AssetType = Enum.AvatarAssetType.DynamicHead,
+    IsBundle = true,
+    ThumbnailId = tonumber(data.Id),
+    ThumbnailIsBundle = true,
+    EquipCategory = "Cabeças"
+    }
+end
+
+local function fillHeadSource(state, source, requestVersion)
+    if source.finished then
+        return
+    end
+    
+    while #source.buffer == 0 and not source.finished do
+        if requestVersion ~= catalogRequestVersion then
+            return
+        end
+        
+        local success, results = pcall(function()
+            return source.pages:GetCurrentPage()
+        end)
+        
+        if not success or not results then
+            source.finished = true
+            break
+        end
+        
+        for _, data in ipairs(results) do
+            local item = createHeadItem(
+            data,
+            source.sourceType,
+            state.seenIds
+            )
+            
+            if item then
+                table.insert(source.buffer, item)
+            end
+        end
+        
+        if source.pages.IsFinished then
+            source.finished = true
+            break
+        end
+        
+        if #source.buffer == 0 then
+            local advanceSuccess = pcall(function()
+                source.pages:AdvanceToNextPageAsync()
+            end)
+            
+            if not advanceSuccess then
+                source.finished = true
+                break
+            end
+        end
+    end
+end
+
+local function appendHeadsPage(requestVersion)
+    local state = categoryCatalogState
+    
+    if not state or state.loading then
+        return false
+    end
+    
+    state.loading = true
+    
+    local added = 0
+    
+    while added < CATALOG_PAGE_SIZE do
+        if requestVersion ~= catalogRequestVersion then
+            state.loading = false
+            return false
+        end
+        
+        for _, source in ipairs(state.sources) do
+            if #source.buffer == 0 and not source.finished then
+                fillHeadSource(state, source, requestVersion)
+            end
+        end
+        
+        local availableSources = {}
+        
+        for _, source in ipairs(state.sources) do
+            if #source.buffer > 0 then
+                table.insert(availableSources, source)
+            end
+        end
+        
+        if #availableSources == 0 then
+            break
+        end
+        
+        state.roundRobin += 1
+        
+        local sourceIndex =
+        ((state.roundRobin - 1) % #availableSources) + 1
+        
+        local source = availableSources[sourceIndex]
+        local item = table.remove(source.buffer, 1)
+        
+        if item then
+            table.insert(allItems, item)
+            createCard(item)
+            added += 1
+        end
+    end
+    
+    local finished = true
+    
+    for _, source in ipairs(state.sources) do
+        if not source.finished or #source.buffer > 0 then
+            finished = false
+            break
+        end
+    end
+    
+    state.finished = finished
+    state.loading = false
+    
+    refreshCards()
+    
+    return added > 0
+end
+
+local function loadHeads(keyword, sortType, requestVersion)
+    clearItems()
+    allItems = {}
+    
+    categoryCatalogState = {
+    requestVersion = requestVersion,
+    category = "Cabeças",
+    sources = {},
+    seenIds = {},
+    roundRobin = 0,
+    finished = false,
+    loading = false
+    }
+    
+    local state = categoryCatalogState
+    
+    local sourceTypes = {
+    {AssetType = Enum.AvatarAssetType.Head},
+    {AssetType = Enum.AvatarAssetType.Face},
+    {AssetType = Enum.AvatarAssetType.DynamicHead},
+    {BundleType = Enum.BundleType.DynamicHead},
+    {BundleType = Enum.BundleType.DynamicHeadAvatar}
+    }
+    
+    local pending = #sourceTypes
+    
+    for _, sourceType in ipairs(sourceTypes) do
+        task.spawn(function()
+            local success, pages = pcall(function()
+                return createHeadSource(
+                keyword,
+                sortType,
+                sourceType
+                )
+            end)
+            
+            if requestVersion == catalogRequestVersion
+                and success
+                and pages then
+                
+                table.insert(state.sources, {
+                sourceType = sourceType,
+                pages = pages,
+                buffer = {},
+                finished = false
+                })
+            end
+            
+            pending -= 1
+            
+            if pending <= 0
+                and requestVersion == catalogRequestVersion then
+                appendHeadsPage(requestVersion)
+            end
+        end)
+    end
+end
+
+local function loadMoreCurrentCategory()
+    if currentFilter == "Todos"
+        or currentFilter == "Vestindo" then
+        return
+    end
+    
+    if currentCategory == "Sapatos" then
+        loadMoreShoes()
+        return
+    end
+    
+    if currentCategory == "Cabeças" then
+        local state = categoryCatalogState
+        
+        if not state
+            or state.loading
+            or state.finished
+            or loadingMoreCategory then
+            return
+        end
+        
+        loadingMoreCategory = true
+        
+        local requestVersion = state.requestVersion
+        
+        task.spawn(function()
+            appendHeadsPage(requestVersion)
+            
+            if requestVersion == catalogRequestVersion then
+                loadingMoreCategory = false
+            end
+        end)
+        
+        return
+    end
+    
+    loadMoreCategory()
+end
+
+itemScroll:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+    if currentFilter == "Vestindo" then
+        return
+    end
+    
+    local remaining =
+    itemScroll.AbsoluteCanvasSize.Y
+    - (itemScroll.CanvasPosition.Y + itemScroll.AbsoluteWindowSize.Y)
+    
+    if remaining <= 500 then
+        if currentFilter == "Todos" then
+            loadMoreAllCatalog()
+        else
+            loadMoreCurrentCategory()
+        end
+    end
+end)
+
+local function loadCatalog(category, keyword)
+    catalogRequestVersion += 1
+    
+    local requestVersion = catalogRequestVersion
+    
+    loadingMoreAll = false
+    loadingMoreCategory = false
+    allCatalogState = nil
+    categoryCatalogState = nil
+    
+    local sortType = Enum.CatalogSortType.Relevance
+    
+    if currentFilter == "Recente" then
+        sortType = Enum.CatalogSortType.RecentlyCreated
+    end
+    
+    task.spawn(function()
+        if requestVersion ~= catalogRequestVersion then
+            return
+        end
+        
+        if currentFilter == "Vestindo" then
+            loadUsing()
+            return
+        end
+        
+        if currentFilter == "Todos" then
+            loadAllCatalog(keyword, sortType, requestVersion)
+            return
+        end
+        
+        if category == "Sapatos" then
+            loadShoes(keyword, sortType, requestVersion)
+            return
+        end
+        
+        if category == "Cabeças" then
+            loadHeads(keyword, sortType, requestVersion)
+            return
+        end
+        
+        loadNormalCategory(
+        category,
+        keyword,
+        sortType,
+        requestVersion
+        )
+    end)
+end
+
+local function selectCategory(category)
+    currentCategory = category
+    
+    for name, button in pairs(categoryButtons) do
+        button.BackgroundColor3 =
+        name == category and PURPLE or CARD
+    end
+    
+    loadCatalog(category, searchBox.Text)
+end
+
+local function selectFilter(filter)
+    currentFilter = filter
+    
+    for name, button in pairs(filterButtons) do
+        button.BackgroundColor3 =
+        name == filter and PURPLE or CARD
+    end
+    
+    if filter == "Todos" then
+        for _, button in pairs(categoryButtons) do
+            button.BackgroundColor3 = CARD
+        end
+    end
+    
+    if filter == "Vestindo" then
+        catalogRequestVersion += 1
+        usingLoadVersion += 1
+        loadingMoreAll = false
+        loadingMoreCategory = false
+        allCatalogState = nil
+        categoryCatalogState = nil
+        task.spawn(loadUsing)
+    else
+        loadCatalog(currentCategory, searchBox.Text)
+    end
+end
+
+for filter, button in pairs(filterButtons) do
+    button.Activated:Connect(function()
+        selectFilter(filter)
+    end)
+end
+
+for category, button in pairs(categoryButtons) do
+    button.Activated:Connect(function()
+        if currentFilter == "Vestindo"
+            or currentFilter == "Todos" then
+            
+            currentFilter = "Relevância"
+            
+            for name, filterButton in pairs(filterButtons) do
+                filterButton.BackgroundColor3 =
+                name == "Relevância" and PURPLE or CARD
+            end
+        end
+        
+        selectCategory(category)
+    end)
+end
+
+local searchVersion = 0
+
+searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+    searchVersion += 1
+    
+    local thisVersion = searchVersion
+    
+    task.delay(0.25, function()
+        if thisVersion ~= searchVersion then
+            return
+        end
+        
+        if currentFilter == "Vestindo" then
+            catalogRequestVersion += 1
+            usingLoadVersion += 1
+            allCatalogState = nil
+            categoryCatalogState = nil
+            task.spawn(loadUsing)
+        else
+            loadCatalog(currentCategory, searchBox.Text)
+        end
+    end)
+end)
+
+local function stopCurrentEmote()
+    local character = player.Character
+    
+    if not character then
+        return
+    end
+    
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    
+    if not humanoid then
+        return
+    end
+    
+    local success, tracks = pcall(function()
+        return humanoid:GetPlayingAnimationTracks()
+    end)
+    
+    if not success or not tracks then
+        return
+    end
+    
+    for _, track in ipairs(tracks) do
+        if track.Priority == Enum.AnimationPriority.Action
+            or track.Priority == Enum.AnimationPriority.Action2
+            or track.Priority == Enum.AnimationPriority.Action3
+            or track.Priority == Enum.AnimationPriority.Action4 then
+            
+            pcall(function()
+                track:Stop(0.15)
+            end)
+        end
+    end
+end
+
+local function playNativeEmote(emoteName)
+    local character = player.Character
+    
+    if not character then
+        return false
+    end
+    
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    
+    if not humanoid then
+        return false
+    end
+    
+    stopCurrentEmote()
+    
+    local success, result = pcall(function()
+        return humanoid:PlayEmoteAsync(emoteName)
+    end)
+    
+    if not success then
+        return false
+    end
+    
+    return result == true
+end
+
+remote.OnClientEvent:Connect(function(action, id, extra)
+    if action == "PlayEmote" then
+        local played = playNativeEmote(id)
+        
+        if played then
+            activeItems[extra] = true
+        else
+            activeItems[extra] = nil
+        end
+        
+    elseif action == "Equipped" then
+        activeItems[tonumber(id)] = true
+        
+        if currentFilter == "Vestindo" then
+            task.defer(loadUsing)
+        end
+        
+    elseif action == "Unequipped" then
+        activeItems[tonumber(id)] = nil
+        
+        if currentFilter == "Vestindo" then
+            task.defer(loadUsing)
+        end
+        
+    elseif action == "ClearEquipped" then
+        activeItems = {}
+        
+        if currentFilter == "Vestindo" then
+            task.defer(loadUsing)
+        end
+        
+    elseif action == "StopEmote" then
+        stopCurrentEmote()
+        
+        if extra then
+            activeItems[tonumber(extra)] = nil
+        end
+        
+    elseif action == "RefreshAvatar" then
+        if currentFilter == "Vestindo" then
+            task.defer(loadUsing)
+        end
+    end
+    
+    refreshCards()
+end)
+
+openButton.Activated:Connect(function()
+    panel.Visible = true
+    openButton.Visible = false
+end)
+
+closeButton.Activated:Connect(function()
+    panel.Visible = false
+    openButton.Visible = true
+end)
+
+for name, button in pairs(filterButtons) do
+    button.BackgroundColor3 =
+    name == "Relevância" and PURPLE or CARD
+end
+
+categoryButtons["Roupas 2D"].BackgroundColor3 = PURPLE
+currentCategory = "Roupas 2D"
+
+task.defer(function()
+    loadCatalog("Roupas 2D", "")
+end)
